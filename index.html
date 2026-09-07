@@ -11,6 +11,7 @@
   --peri:#d0d9fe;
   --mauve:#c879ff;
   --peony:#e06c9f;
+  --navy:#171f36;
   --ink:#000000;
   --body:#222222;
   --muted:#555555;
@@ -49,8 +50,19 @@ body{
 /* ---------- shell ---------- */
 .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 44px}
 header{padding:52px 0 0}
-.mark{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-title);font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
-.mark i{display:block;width:9px;height:26px;background:repeating-linear-gradient(to bottom,var(--cyan) 0 2px,#fff 2px 3.5px)}
+.mark{display:inline-flex;align-items:center;font-family:var(--font-title);font-size:22px;font-weight:500;color:var(--navy);letter-spacing:-.01em}
+/* ---------- the mark ----------
+   The 16 IS the mark: sixteen cyan rules, and the count has to survive any
+   size. A background tile of exactly one sixteenth of the block height with
+   a single rule in it gives sixteen at 16px and sixteen at 160px, where a
+   gradient repeating on a pixel period gives whatever happens to fit --
+   which was six. Proportions are measured off the master artwork: the block
+   is .42 of the cap height wide and 1.67 of it tall, set .33 off each word,
+   and the rule takes 59% of its own tile. */
+.mark i,.appbar .brand i{
+  display:block;flex:none;width:.29em;height:1.17em;margin:0 .23em;
+  background-image:linear-gradient(to bottom,var(--cyan) 0 59%,transparent 59% 100%);
+  background-size:100% 6.25%;background-repeat:repeat-y}
 .eyebrow{font-family:var(--font-title);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--persian)}
 h1{font-family:var(--font-title);font-size:38px;font-weight:800;color:var(--ink);line-height:1.08;letter-spacing:-.02em;margin:10px 0 0;text-wrap:balance}
 .lede{font-size:13.5px;color:var(--muted);max-width:66ch;margin:12px 0 0}
@@ -402,12 +414,10 @@ body{padding-top:58px}
 .appbar{position:fixed;top:0;left:0;right:0;z-index:70;height:58px;display:flex;align-items:center;
   padding:0;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.5) blur(12px);
   border-bottom:1px solid var(--line)}
-.appbar .brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-title);font-size:16px;
-  font-weight:700;color:var(--ink);letter-spacing:-.01em;flex:none;cursor:pointer;background:none;border:0;padding:0}
-.appbar .brand i{display:block;width:7px;height:19px;
-  background:repeating-linear-gradient(to bottom,var(--cyan) 0 2px,#fff 2px 3.5px)}
+.appbar .brand{display:inline-flex;align-items:center;font-family:var(--font-title);font-size:16px;
+  font-weight:500;color:var(--navy);letter-spacing:-.01em;flex:none;cursor:pointer;background:none;border:0;padding:0}
 .appbar .brand u{font-family:var(--font-title);font-size:8.5px;font-weight:700;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--caption);text-decoration:none;margin-left:5px}
+  text-transform:uppercase;color:var(--caption);text-decoration:none;margin-left:10px}
 .appnav{display:flex;gap:3px;margin-left:8px}
 .appnav button{font-family:var(--font-title);font-size:11px;font-weight:700;letter-spacing:.09em;
   text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:8px;padding:9px 14px;
@@ -6603,9 +6613,36 @@ footer{position:relative;z-index:1;border-top:1px solid var(--line);background:v
 
 
 <footer><div class="foot">
-  <span class="mark" style="font-size:16px">Floor<i style="height:19px;width:7px"></i>16</span>
+  <span class="mark" style="font-size:16px">Floor<i></i>16</span>
   <span>Microsoft 365 consulting and IT advisory &middot; Calgary, Alberta</span>
 </div></footer>
+
+
+<style id="f16-scroll-reveal">
+/* ===================== load as you scroll =====================
+   Two things used to happen at page load and were therefore over before
+   anyone had scrolled to them: every CSS keyframe animation started its
+   clock, and the card was simply there. Now the card rises into place as
+   it enters the viewport and its component's animation clock starts at
+   that moment, so what you see when you arrive is the thing playing from
+   the beginning rather than its final frame.
+
+   The pause is scoped to a demo inside a card, so the copies cloned into
+   the wizard and the request picker are untouched. The whole reveal is
+   gated on .jsreveal, which the script adds only once it has reached the
+   wiring: if the script never gets there, nothing is ever hidden. */
+.jsreveal .item{opacity:0;transform:translateY(15px);
+  transition:opacity .55s ease,transform .55s cubic-bezier(.16,.8,.3,1)}
+.jsreveal .item.revealed{opacity:1;transform:none}
+.jsreveal .item .demo:not(.inview) *{animation-play-state:paused !important}
+@media(prefers-reduced-motion:reduce){
+  .jsreveal .item{opacity:1;transform:none;transition:none}
+}
+@media print{
+  .jsreveal .item{opacity:1 !important;transform:none !important}
+  .jsreveal .item .demo *{animation-play-state:running !important}
+}
+</style>
 
 <div class="f16-tip" id="tip" role="status" aria-live="polite"></div>
 
@@ -7960,14 +7997,56 @@ if('IntersectionObserver' in window){
   var io=new IntersectionObserver(function(es){ es.forEach(function(e){
     var d=e.target;
     if(e.isIntersecting){
-      onscreen.add(d); play(d);
+      onscreen.add(d); reveal(d);
       /* stagger the first repeat so a screenful does not pulse in unison */
       if(!reduce) schedule(d, LOOP_MS + (onscreen.size%5)*700);
     } else { onscreen['delete'](d); stopLoop(d) }
   }) },{threshold:0.35});
   demos.forEach(function(d){ io.observe(d) });
-} else { demos.forEach(play) }
-window.addEventListener('beforeprint',function(){ demos.forEach(function(d){ seen.add(d); apply(d,true) }) });
+}
+
+/* ---- the reveal ------------------------------------------------------
+   The observer above drives the looping, but it is not the only way in:
+   a scroll pass walks whatever is still pending and reveals what has come
+   into view. Two reasons for the belt and braces. An observer delivers
+   nothing while its document is not being composited, which is how a card
+   can end up sitting in view having never played; and a card can arrive
+   without a scroll at all -- switching to Browse, clearing a filter,
+   resizing. The pass is cheap because pending only ever shrinks. */
+var pending=demos.slice(), ticking=false;
+function reveal(d){
+  var i=pending.indexOf(d); if(i>-1) pending.splice(i,1);
+  var it=d.closest?d.closest('.item'):null;
+  if(it) it.classList.add('revealed');
+  if(d.classList.contains('inview')) { play(d); return }
+  d.classList.add('inview');              /* starts the CSS animation clocks */
+  if(reduce){ play(d); return }
+  /* the card settles first, then its component plays: arriving mid-tween
+     reads as a glitch rather than as the thing animating in */
+  setTimeout(function(){ play(d) },170);
+}
+function revealPass(){
+  ticking=false;
+  if(!pending.length) return;
+  var vh=window.innerHeight||document.documentElement.clientHeight;
+  for(var i=pending.length-1;i>=0;i--){
+    var d=pending[i], r=d.getBoundingClientRect();
+    if(!r.width && !r.height) continue;   /* in a view that is not showing */
+    if(r.top<vh-40 && r.bottom>40) reveal(d);
+  }
+}
+function onScroll(){ if(!ticking){ ticking=true; requestAnimationFrame(revealPass) } }
+document.documentElement.classList.add('jsreveal');
+window.addEventListener('scroll',onScroll,{passive:true});
+window.addEventListener('resize',onScroll);
+/* a view switch or a filter changes what is on screen without a scroll */
+document.addEventListener('click',function(){ setTimeout(revealPass,60) },true);
+revealPass();
+
+window.addEventListener('beforeprint',function(){ demos.forEach(function(d){
+  var it=d.closest?d.closest('.item'):null; if(it) it.classList.add('revealed');
+  d.classList.add('inview'); seen.add(d); apply(d,true);
+}) });
 
 function replay(d){ seen.delete(d); unidle(d); apply(d,false); setTimeout(function(){play(d)},70) }
 $$('.tool[data-act="replay"]').forEach(function(b){ b.addEventListener('click',function(){ replay($('.demo',b.closest('.item'))) }) });
@@ -8013,6 +8092,8 @@ function runFilter(){
   });
   var f=$('#found');
   if(f) f.textContent = (grpF==='all'&&famF==='all'&&!txtF) ? '' : n+(n===1?' technique':' techniques');
+  /* filtering reflows the grid: cards that were below the fold may now be on it */
+  if(typeof revealPass==='function') revealPass();
 }
 $$('.gchip').forEach(function(c){ c.addEventListener('click',function(){
   $$('.gchip').forEach(function(x){x.classList.remove('on')}); c.classList.add('on');
