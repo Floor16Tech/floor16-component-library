@@ -7984,7 +7984,7 @@ startAmbient();
    long as it stays there. Only visible cards hold a timer, so the cost is
    the handful on screen rather than all 111. Reduced motion opts out, and
    the toolbar toggle turns looping off without stopping the first play. */
-var LOOP_MS=7000, loopOn=!reduce, timers=new WeakMap(), onscreen=new Set();
+var LOOP_MS=4000, loopOn=!reduce, timers=new WeakMap(), onscreen=new Set();
 function stopLoop(d){ var t=timers.get(d); if(t){ clearTimeout(t); timers['delete'](d) } }
 function schedule(d,delay){
   stopLoop(d);
@@ -7999,7 +7999,7 @@ if('IntersectionObserver' in window){
     if(e.isIntersecting){
       onscreen.add(d); reveal(d);
       /* stagger the first repeat so a screenful does not pulse in unison */
-      if(!reduce) schedule(d, LOOP_MS + (onscreen.size%5)*700);
+      if(!reduce) schedule(d, LOOP_MS + (onscreen.size%5)*400);
     } else { onscreen['delete'](d); stopLoop(d) }
   }) },{threshold:0.35});
   demos.forEach(function(d){ io.observe(d) });
